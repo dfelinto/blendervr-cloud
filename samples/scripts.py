@@ -4,9 +4,10 @@ from bge import (
         )
 
 import time
+import os
 
 class CloudTexture:
-    def __init__(self, basedir, ob):
+    def __init__(self, basedir, ob, length):
         """basedir should be absolute already"""
         self._frame = 0
         self._basedir = basedir
@@ -15,10 +16,13 @@ class CloudTexture:
         self._time_initial = time.time()
         self._texture = None
         self._object = ob
+        self._length = length + 1
 
-    def init(self):
+        self._init()
+
+    def _init(self):
         # get the reference pointer (ID) of the texture
-        ID = texture.materialID(ob, 'ID0001.png')
+        ID = texture.materialID(self._object, 'IM0001.png')
 
         # create a texture object 
         self._texture = texture.Texture(self._object, ID)
@@ -42,13 +46,14 @@ class CloudTexture:
     def _getSource(self):
         """"""
         url = self._getImagePath()
-        source = texture.ImageFFMpeg(url)
+        source = texture.ImageFFmpeg(url)
+        return source
 
     def _getFrame(self):
         """"""
         time_current = time.time()
-        frame = (time_current - self._time_initial) // self._fps
-        return frame
+        frame = (time_current - self._time_initial) * self._fps
+        return int(frame) % self._length
 
     def _getImagePath(self):
         """"""
@@ -61,11 +66,12 @@ def init(cont):
     """run once"""
 
     ob = cont.owner
-    basedir = logic.expandPath("//../data/running/media/")
+    basedir = logic.expandPath("//../data/running/")
 
-    logic.cloud = CloudTexture(basedir, ob)
+    logic.cloud = CloudTexture(basedir, ob, 110)
+    logic.getCurrentScene().pre_draw.append(update_image)
 
 
-def loop():
-    """run every frame"""
+def update_image():
+    """"""
     logic.cloud.loop()
