@@ -31,10 +31,37 @@ bl_info = {
 
 
 import bpy
+
 from bpy.props import (
+        BoolProperty,
         IntProperty,
         FloatProperty,
+        FloatVectorProperty,
         )
+
+import bmesh
+
+
+def add_pixel_plane(plane_width, pixels_width, pixels_height):
+    """"""
+    verts = []
+    faces = []
+
+    w = plane_width / pixels_width
+    h = w * (pixels_width / pixels_height)
+
+    for i in range(pixels_width):
+        for j in range(pixels_height):
+            verts.append(((i + 1) * w,       j * h, 0.0))
+            verts.append((      i * w,       j * h, 0.0))
+            verts.append((      i * w, (j + 1) * h, 0.0))
+            verts.append(((i + 1) * w, (j + 1) * h, 0.0))
+
+            # the id of the first vertex
+            _id = ((i * pixels_height)  + j) * 4
+            faces.append((_id, _id + 1, _id + 2, _id + 3))
+
+    return verts, faces
 
 
 class AddPixelPlaneOperator(bpy.types.Operator):
@@ -43,15 +70,72 @@ class AddPixelPlaneOperator(bpy.types.Operator):
     bl_label = "Add Pixel Plane"
     bl_options = {'REGISTER', 'UNDO'}
 
-    pixels_width = IntProperty(name="Pixels Width", default=1920, min = 2, max=4096)
-    pixels_height = IntProperty(name="Pixels Height", default=1080, min = 2, max=4096)
-    plane_width = FloatProperty(name="Width", default=1.0, min = 0.1, max=10.0)
+    plane_width = FloatProperty(
+            name="Width",
+            default=1.0,
+            min = 0.1,
+            max=10.0,
+            )
+
+    pixels_width = IntProperty(
+            name="Pixels Width",
+            default=1920,
+            min = 2,
+            max=4096,
+            )
+
+    pixels_height = IntProperty(
+            name="Pixels Height",
+            default=1080,
+            min = 2,
+            max=4096,
+            )
+
+    # generic transform props
+    view_align = BoolProperty(
+            name="Align to View",
+            default=False,
+            )
+
+    location = FloatVectorProperty(
+            name="Location",
+            subtype='TRANSLATION',
+            )
+
+    rotation = FloatVectorProperty(
+            name="Rotation",
+            subtype='EULER',
+            )
 
     @classmethod
     def poll(cls, context):
         return True
 
     def execute(self, context):
+
+        verts_loc, faces = add_pixel_plane(
+                self.plane_width,
+                self.pixels_width,
+                self.pixels_height,
+                )
+
+        mesh = bpy.data.meshes.new('Pixel Plane')
+        bm = bmesh.new()
+
+        for v_co in verts_loc:
+            bm.verts.new(v_co)
+
+        bm.verts.ensure_lookup_table()
+        for f_idx in faces:
+            bm.faces.new([bm.verts[i] for i in f_idx])
+
+        bm.to_mesh(mesh)
+        mesh.update()
+
+        # add the mesh as an object into the scene with this utility module
+        from bpy_extras import object_utils
+        object_utils.object_data_add(context, mesh, operator=self)
+
         return {'FINISHED'}
 
     def invoke(self, context, event):
