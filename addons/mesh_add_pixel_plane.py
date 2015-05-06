@@ -79,14 +79,14 @@ class AddPixelPlaneOperator(bpy.types.Operator):
 
     pixels_width = IntProperty(
             name="Pixels Width",
-            default=1920,
+            default=640,
             min = 2,
             max=4096,
             )
 
     pixels_height = IntProperty(
             name="Pixels Height",
-            default=1080,
+            default=480,
             min = 2,
             max=4096,
             )
