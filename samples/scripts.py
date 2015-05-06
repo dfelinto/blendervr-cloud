@@ -15,6 +15,8 @@ class CloudTexture:
         self._fps = 30
         self._time_initial = time.time()
         self._texture = None
+        self._vertex_shader = self._openText('cloud.vp')
+        self._fragment_shader = self._openText('cloud.fp')
         self._object = ob
         self._length = length + 1
 
@@ -24,10 +26,10 @@ class CloudTexture:
         # get the reference pointer (ID) of the texture
         ID = texture.materialID(self._object, 'IM0001.png')
 
-        # create a texture object 
+        # create a texture object
         self._texture = texture.Texture(self._object, ID)
 
-        # update the texture
+        # update the texture and shader
         self._update()
 
     def loop(self):
@@ -39,9 +41,22 @@ class CloudTexture:
 
     def _update(self):
         """"""
+        # replace texture
         source = self._getSource()
         self._texture.source = source
         self._texture.refresh(False)
+
+        # setup the custom glsl shader
+        self._shader()
+
+    def _openText(self, path):
+        """"""
+        folderpath = os.path.dirname(os.path.abspath(__file__))
+        filepath = os.path.join(folderpath, path)
+        f = open(filepath, 'r')
+        data = f.read()
+        f.close()
+        return data
 
     def _getSource(self):
         """"""
@@ -60,6 +75,18 @@ class CloudTexture:
         filename = "{0:04}.png".format(self._frame)
         url = os.path.join(self._basedir, filename)
         return url
+
+    def _shader(self):
+        """"""
+        for mesh in self._object.meshes:
+            for material in mesh.materials:
+                shader = material.getShader()
+
+            if shader != None:
+                if not shader.isValid():
+                    shader.setSource(self._vertex_shader, self._fragment_shader, True)
+
+                shader.setSampler('color_map', 0)
 
 
 def init(cont):
