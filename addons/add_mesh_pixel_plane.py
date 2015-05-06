@@ -48,7 +48,7 @@ def add_pixel_plane(plane_width, pixels_width, pixels_height):
     faces = []
 
     w = plane_width / pixels_width
-    h = w * (pixels_width / pixels_height)
+    h = w / (pixels_width / pixels_height)
 
     for i in range(pixels_width):
         for j in range(pixels_height):
