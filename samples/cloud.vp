@@ -3,5 +3,7 @@ varying vec4 coord_vec;
 void main() {
     coord_vec = gl_Vertex;
     gl_Position = gl_ModelViewProjectionMatrix * coord_vec;
+
+    // the coordinates in the image are stored in the UV
     gl_TexCoord[0] = gl_MultiTexCoord0;
 }
