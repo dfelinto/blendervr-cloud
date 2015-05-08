@@ -67,6 +67,26 @@ def add_pixel_plane(plane_width, pixels_width, pixels_height):
     return verts, faces
 
 
+def set_pixel_plane_uv(bm, plane_width, pixels_width, pixels_height):
+    """"""
+    from mathutils import Vector
+
+    plane_height = plane_width / (pixels_width / pixels_height)
+
+    uv_layer = bm.loops.layers.uv.verify()
+    bm.faces.layers.tex.verify()  # currently blender needs both layers.
+
+    for f in bm.faces:
+        for l in f.loops:
+            luv = l[uv_layer]
+
+            xy = l.vert.co.xy.copy()
+            xy[0] /= plane_width
+            xy[1] /= plane_height
+
+            luv.uv = xy
+
+
 class AddPixelPlaneOperator(bpy.types.Operator):
     """Add a simple box mesh"""
     bl_idname = "mesh.pixel_plane_add"
@@ -131,6 +151,13 @@ class AddPixelPlaneOperator(bpy.types.Operator):
         bm.verts.ensure_lookup_table()
         for f_idx in faces:
             bm.faces.new([bm.verts[i] for i in f_idx])
+
+        set_pixel_plane_uv(
+                bm,
+                self.plane_width,
+                self.pixels_width,
+                self.pixels_height,
+                )
 
         bm.to_mesh(mesh)
         mesh.update()
