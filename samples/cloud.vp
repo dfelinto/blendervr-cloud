@@ -1,14 +1,19 @@
 uniform sampler2D color_map;
+
 const float factor = 0.3;
+const float range_near = 0.5;
+const float range_far = 4.5;
 
 void main()
 {
     gl_TexCoord[0] = gl_MultiTexCoord0;
 
     vec4 color = texture2D(color_map, gl_TexCoord[0].st);
-    float depth = color[3] * 4.0 * factor;
+    float depth = (range_near + color[3] * range_far) * factor;
 
     vec4 coord_vec = gl_Vertex;
+
+    /* depth effect */
     coord_vec.x -= depth;
 
     gl_Position = gl_ModelViewProjectionMatrix * coord_vec;
