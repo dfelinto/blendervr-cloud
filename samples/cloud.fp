@@ -1,7 +1,14 @@
 uniform sampler2D color_map;
-varying vec4 coord_vec;
 
-void main() {
+void main()
+{
     vec4 color = texture2D(color_map, gl_TexCoord[0].st);
-    gl_FragColor = mix(color, coord_vec, 0.1);
+    gl_FragColor = color;
+
+    if (color.a > 0.999) {
+        discard;
+    }
+    else {
+        gl_FragColor.a = 1.0;
+    }
 }
