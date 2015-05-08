@@ -47,8 +47,8 @@ def add_pixel_plane(plane_width, pixels_width, pixels_height):
     verts = []
     faces = []
 
-    w = plane_width / pixels_width
-    h = w / (pixels_width / pixels_height)
+    w = plane_width / (pixels_width - 1)
+    h = (plane_width / (pixels_width / pixels_height)) / (pixels_height - 1)
 
     for i in range(pixels_width):
         for j in range(pixels_height):
