@@ -52,34 +52,19 @@ def add_pixel_plane(plane_width, pixels_width, pixels_height):
 
     for i in range(pixels_width):
         for j in range(pixels_height):
-            verts.append(((i + 1) * w,       j * h, 0.0))
-            verts.append((      i * w,       j * h, 0.0))
-            verts.append((      i * w, (j + 1) * h, 0.0))
-            verts.append(((i + 1) * w, (j + 1) * h, 0.0))
+            verts.append((i * w, j * h, 0.0))
+
+    for i in range(pixels_width - 1):
+        for j in range(pixels_height - 1):
+            v1 = (pixels_height * i) + j
+            v0 = v1 + 1
+            v2 = v1 + pixels_height
+            v3 = v2 + 1
 
             # the id of the first vertex
-            _id = ((i * pixels_height)  + j) * 4
-            faces.append((_id, _id + 1, _id + 2, _id + 3))
+            faces.append((v0, v1, v2, v3))
 
     return verts, faces
-
-
-def set_pixel_plane_uv(bm):
-    """"""
-    from mathutils import Vector
-
-    uv_layer = bm.loops.layers.uv.verify()
-    bm.faces.layers.tex.verify()  # currently blender needs both layers.
-
-    # adjust UVs
-    for f in bm.faces:
-        coords = Vector((0.0, 0.0))
-        for l in f.loops:
-            coords += l.vert.co.xy * 0.25
-
-        for l in f.loops:
-            luv = l[uv_layer]
-            luv.uv = coords
 
 
 class AddPixelPlaneOperator(bpy.types.Operator):
@@ -146,8 +131,6 @@ class AddPixelPlaneOperator(bpy.types.Operator):
         bm.verts.ensure_lookup_table()
         for f_idx in faces:
             bm.faces.new([bm.verts[i] for i in f_idx])
-
-        set_pixel_plane_uv(bm)
 
         bm.to_mesh(mesh)
         mesh.update()
