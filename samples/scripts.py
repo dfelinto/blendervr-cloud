@@ -44,13 +44,14 @@ class CloudTexture:
 
     def _update(self):
         """"""
+        # setup the custom glsl shader
+        self._shader()
+
         # replace texture
         source = self._getSource()
         self._texture.source = source
         self._texture.refresh(False)
 
-        # setup the custom glsl shader
-        self._shader()
 
     def _openText(self, path):
         """"""
@@ -94,7 +95,6 @@ class CloudTexture:
 
 def init(cont):
     """run once"""
-
     ob = cont.owner
     basedir = logic.expandPath("//../data/running/")
 
