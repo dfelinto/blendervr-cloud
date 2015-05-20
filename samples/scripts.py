@@ -6,8 +6,6 @@ from bge import (
 import time
 import os
 
-DEBUG = True # wait for the workaround/fix of videotexture
-
 class CloudTexture:
     def __init__(self, basedir, ob, length):
         """basedir should be absolute already"""
@@ -26,14 +24,13 @@ class CloudTexture:
 
     def _init(self):
         # get the reference pointer (ID) of the texture
-        ID = texture.materialID(self._object, 'IM0001.png')
+        ID = texture.materialID(self._object, 'IM0001.tga')
 
         # create a texture object
         self._texture = texture.Texture(self._object, ID)
 
         # update the texture and shader
-        if not DEBUG:
-            self._update()
+        self._update()
 
     def loop(self):
         frame = self._getFrame()
@@ -76,7 +73,7 @@ class CloudTexture:
 
     def _getImagePath(self):
         """"""
-        filename = "{0:04}.png".format(self._frame)
+        filename = "{0:04}.tga".format(self._frame)
         url = os.path.join(self._basedir, filename)
         return url
 
@@ -104,7 +101,4 @@ def init(cont):
 
 def update_image():
     """"""
-    if DEBUG:
-        logic.cloud._shader()
-    else:
-        logic.cloud.loop()
+    logic.cloud.loop()
