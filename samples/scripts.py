@@ -90,6 +90,11 @@ class CloudTexture:
                 shader.setSampler('color_map', 0)
 
 
+def update_image():
+    """pre_draw callback"""
+    logic.cloud.loop()
+
+
 def init(cont):
     """run once"""
     ob = cont.owner
@@ -97,8 +102,3 @@ def init(cont):
 
     logic.cloud = CloudTexture(basedir, ob, 110)
     logic.getCurrentScene().pre_draw.append(update_image)
-
-
-def update_image():
-    """"""
-    logic.cloud.loop()
