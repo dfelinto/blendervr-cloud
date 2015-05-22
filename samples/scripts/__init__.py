@@ -1,10 +1,14 @@
 from bge import (
         logic,
         texture,
+        render,
         )
 
 import time
 import os
+import blf
+
+from bgl import *
 
 class ImageTexture:
     def __init__(self, ob, basedir, name, length):
@@ -76,8 +80,22 @@ class CloudTexture:
         self._time_initial = time.time()
         self._texture_color = None
         self._texture_depth = None
-        self._vertex_shader = self._openText('cloud.vp')
-        self._fragment_shader = self._openText('cloud.fp')
+        self._vertex_shader = self._openText('threejs.vp')
+        self._fragment_shader = self._openText('threejs.fp')
+
+        # shader uniforms
+        self._uniforms = {}
+        self._uniforms['point_size'] = 2
+        self._uniforms['z_offset'] = 1000
+        self._uniforms['near_clip'] = 850
+        self._uniforms['far_clip'] = 4000
+        self._setupSceneCallbacks()
+
+    def _setupSceneCallbacks(self):
+        """"""
+        scene = logic.getCurrentScene()
+        scene.pre_draw.append(self._preDraw)
+        scene.post_draw.append(self._postDraw)
 
     def addTextureImage(self, dummy_object, basedir, name, length, is_color):
         """"""
@@ -143,10 +161,45 @@ class CloudTexture:
                 shader.setSampler('color_map', 0)
                 shader.setSampler('depth_map', 1)
 
+    def _preDraw(self):
+        """pre_draw callback"""
+        self.loop()
 
-def update_image():
-    """pre_draw callback"""
-    logic.cloud.loop()
+    def _postDraw(self):
+        """post_draw callback"""
+        self._drawPoints()
+        self._drawUniformsValues()
+
+    def _drawPoints(self):
+        """"""
+        return
+
+    def _drawUniformsValues(self):
+        """write on screen - it runs every frame"""
+        width = render.getWindowWidth()
+        height = render.getWindowHeight()
+
+        # OpenGL setup
+        glMatrixMode(GL_PROJECTION)
+        glLoadIdentity()
+        gluOrtho2D(0, width, 0, height)
+        glMatrixMode(GL_MODELVIEW)
+        glLoadIdentity()
+
+        glColor3f(1.0, 1.0, 1.0)
+
+        # BLF fun
+        font_id = 0
+        blf.size(font_id, 20, 72)
+        offset_x = width * 0.8
+        offset_y = height * 0.8
+        offset_height = height * 0.03
+
+        y = offset_y
+        for name, data in self._uniforms.items():
+            blf.position(font_id, offset_x, y, 0)
+            blf.draw(font_id, "{0} : {1}".format(name, data))
+            y += offset_height
 
 
 def init(cont):
@@ -183,5 +236,3 @@ def init(cont):
         basedir = logic.expandPath("//../data/kinect/")
         logic.cloud.addTextureVideo(dummy_rgb, basedir + 'rgb.mov', 'RGB', True)
         logic.cloud.addTextureVideo(dummy_depth, basedir + 'depth.mov', 'Depth', False)
-
-    logic.getCurrentScene().pre_draw.append(update_image)
