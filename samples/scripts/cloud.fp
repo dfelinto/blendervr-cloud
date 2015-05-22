@@ -1,4 +1,5 @@
 uniform sampler2D color_map;
+uniform sampler2D depth_map;
 
 const float width = 640.0;  /* number of horizontal vertices */
 const float height = 480.0; /* number of vertical vertices */
@@ -9,11 +10,13 @@ void main()
 {
     vec2 uv = gl_TexCoord[0].st;
     vec4 color = texture2D(color_map, uv);
+    float depth = texture2D(depth_map, uv).r;
 
     /* color */
     gl_FragColor = color;
     gl_FragColor.a = 1.0;
 
+#if 0
     /* barycentric uv to draw only points */
     vec2 cell_size;
     cell_size.x = 1.0 / (width - 1.0);
@@ -34,10 +37,8 @@ void main()
     }
 
     /* culling to discard the background */
-    if (color.a > 0.999) {
+    if (depth > 0.999) {
         discard;
     }
-    else {
-        gl_FragColor.a = 1.0;
-    }
+#endif
 }
