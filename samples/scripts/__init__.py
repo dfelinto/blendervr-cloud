@@ -241,14 +241,17 @@ class PointCloud:
         program = self._program
 
         uniform = glGetUniformLocation(program, "color_map")
-        glActiveTexture(GL_TEXTURE0)
+        glActiveTexture(GL_TEXTURE1)
         glBindTexture(GL_TEXTURE_2D, self._color_id)
-        if uniform != -1: glUniform1i(uniform, 0)
+        if uniform != -1: glUniform1i(uniform, 1)
 
         uniform = glGetUniformLocation(program, "depth_map")
         glActiveTexture(GL_TEXTURE2)
         glBindTexture(GL_TEXTURE_2D, self._depth_id)
         if uniform != -1: glUniform1i(uniform, 2)
+
+        # need to restore this texture otherwise we can't draw the debug info
+        glActiveTexture(GL_TEXTURE0)
 
         uniform = glGetUniformLocation(program, "width")
         if uniform != -1: glUniform1f(uniform, self._width)
