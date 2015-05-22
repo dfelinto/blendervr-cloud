@@ -164,13 +164,22 @@ def init(cont):
     # initialize
     logic.cloud = CloudTexture(ob)
 
+    #data = 'RUNNING'
+    data = 'WEBGL'
+    #data = 'KINECT'
 
-    if False:
+    if data == 'RUNNING':
         basedir = logic.expandPath("//../data/running-rgb/")
         logic.cloud.addTextureImage(dummy_rgb, basedir, 'RGB', 110, True)
         basedir = logic.expandPath("//../data/running-depth/")
         logic.cloud.addTextureImage(dummy_depth, basedir, 'Depth', 110, False)
-    else:
+
+    elif data == 'WEBGL':
+        basedir = logic.expandPath("//../data/webgl/")
+        logic.cloud.addTextureVideo(dummy_rgb, basedir + 'kinect.webm', 'RGB', True)
+        logic.cloud.addTextureVideo(dummy_depth, basedir + 'kinect.webm', 'Depth', False)
+
+    elif data == 'KINECT':
         basedir = logic.expandPath("//../data/kinect/")
         logic.cloud.addTextureVideo(dummy_rgb, basedir + 'rgb.mov', 'RGB', True)
         logic.cloud.addTextureVideo(dummy_depth, basedir + 'depth.mov', 'Depth', False)
