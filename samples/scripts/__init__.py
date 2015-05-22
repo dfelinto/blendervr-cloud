@@ -252,11 +252,6 @@ class PointCloud:
         glBindTexture(GL_TEXTURE_2D, self._depth_id)
         if uniform != -1: glUniform1i(uniform, 0)
 
-        uniform = glGetUniformLocation(program, "map")
-        glActiveTexture(GL_TEXTURE0)
-        glBindTexture(GL_TEXTURE_2D, self._depth_id)
-        if uniform != -1: glUniform1i(uniform, 0)
-
         uniform = glGetUniformLocation(program, "width")
         if uniform != -1: glUniform1f(uniform, self._width)
 
