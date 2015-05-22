@@ -1,4 +1,4 @@
-uniform sampler2D map;
+uniform sampler2D depth_map;
 
 uniform float width;
 uniform float height;
@@ -16,7 +16,7 @@ void main()
     vec4 position = gl_Vertex;
     vUv = vec2( position.x / width, position.y / height );
 
-    vec4 color = texture2D( map, vUv );
+    vec4 color = texture2D( depth_map, vUv );
     float depth = ( color.r + color.g + color.b ) / 3.0;
 
     // Projection code by @kcmic
