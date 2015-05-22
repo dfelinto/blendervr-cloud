@@ -35,9 +35,11 @@ void main()
     if (radius > point_size) {
         discard;
     }
+#endif
 
+#if 0
     /* culling to discard the background */
-    if (depth > 0.999) {
+    if (depth < 0.0001) {
         discard;
     }
 #endif
