@@ -43,6 +43,10 @@ class ImageTexture:
         url = os.path.join(self._basedir, filename)
         return url
 
+    @property
+    def bind_id(self):
+        return self._texture.bindId
+
 
 class VideoTexture:
     def __init__(self, ob, filepath, name):
@@ -69,9 +73,13 @@ class VideoTexture:
         source.play()
         return source
 
+    @property
+    def bind_id(self):
+        return self._texture.bindId
+
 
 class CloudTexture:
-    def __init__(self, ob):
+    def __init__(self, ob, width, height):
         """basedir should be absolute already"""
         self._frame = -1
         self._object = ob
@@ -80,16 +88,30 @@ class CloudTexture:
         self._time_initial = time.time()
         self._texture_color = None
         self._texture_depth = None
-        self._vertex_shader = self._openText('threejs.vp')
-        self._fragment_shader = self._openText('threejs.fp')
+        self._vertex_shader_source = self._openText('threejs.vp')
+        self._fragment_shader_source = self._openText('threejs.fp')
 
         # shader uniforms
         self._uniforms = {}
         self._uniforms['point_size'] = 2
         self._uniforms['z_offset'] = 1000
-        self._uniforms['near_clip'] = 850
-        self._uniforms['far_clip'] = 4000
+        self._uniforms['near_clipping'] = 850
+        self._uniforms['far_clipping'] = 4000
+        self._width = width
+        self._height = height
+
+        self._points = None
+        self._color_id = -1
+        self._depth_id = -1
+        self._vertex_shader = None
+        self._fragment_shader = None
+
+        self._setupShader()
         self._setupSceneCallbacks()
+
+    def __del__(self):
+        if self._points and glDeleteLists:
+            glDeleteLists(self._points, 1)
 
     def _setupSceneCallbacks(self):
         """"""
@@ -130,8 +152,12 @@ class CloudTexture:
         self._texture_color.update(frame)
         self._texture_depth.update(frame)
 
+
+        self._color_id = self._texture_color.bind_id
+        self._depth_id = self._texture_depth.bind_id
+
         # setup the custom glsl shader
-        self._shader()
+        #self._shader()
 
     def _openText(self, path):
         """"""
@@ -148,18 +174,102 @@ class CloudTexture:
         frame = (time_current - self._time_initial) * self._fps
         return int(frame)
 
-    def _shader(self):
+    def _setupShader(self):
+        """create display list"""
+
+        # display list for point cloud
+        self._points = glGenLists(1)
+
+        if self._points:
+            glNewList(self._points, GL_COMPILE)
+            self._drawPoints()
+            glEndList()
+
+        # shader programs
+        self._fragment_shader = self._createShader(self._fragment_shader_source, type=GL_FRAGMENT_SHADER)
+        self._vertex_shader = self._createShader(self._vertex_shader_source, type=GL_VERTEX_SHADER)
+
+    def _createShader(self, source, program=None, type=GL_FRAGMENT_SHADER):
         """"""
-        for mesh in self._object.meshes:
-            for material in mesh.materials:
-                shader = material.getShader()
+        if program == None:
+            program = glCreateProgram()
 
-            if shader != None:
-                if not shader.isValid():
-                    shader.setSource(self._vertex_shader, self._fragment_shader, True)
+        shader = glCreateShader(type)
+        glShaderSource(shader, source)
+        glCompileShader(shader)
 
-                shader.setSampler('color_map', 0)
-                shader.setSampler('depth_map', 1)
+        success = Buffer(GL_INT, 1)
+        glGetShaderiv(shader, GL_COMPILE_STATUS, success)
+
+        if not success[0]:
+            self._printShaderErrors(shader, source)
+
+        glAttachShader(program, shader)
+        glLinkProgram(program)
+
+        return program
+
+    def _printShaderErrors(self, shader, source):
+        """"""
+        log = Buffer(GL_BYTE, len(source))
+        length = Buffer(GL_INT, 1)
+
+        print('Shader Code:')
+        glGetShaderSource(shader, len(log), length, log)
+
+        line = 1
+        msg = "  1 "
+
+        for i in range(length[0]):
+            if chr(log[i-1]) == '\n':
+                line += 1
+                msg += "%3d %s" %(line, chr(log[i]))
+            else:
+                msg += chr(log[i])
+
+        print(msg)
+
+        glGetShaderInfoLog(shader, len(log), length, log)
+        print("Error in GLSL Shader:\n")
+        msg = ""
+        for i in range(length[0]):
+            msg += chr(log[i])
+
+        print (msg)
+        logic.endGame()
+
+    def _setupUniforms(self):
+        """"""
+        program = self._fragment_program
+
+        """
+        uniform = glGetUniformLocation(program, "color_map")
+        glActiveTexture(GL_TEXTURE0)
+        glBindTexture(GL_TEXTURE_2D, self._color_id)
+        if uniform != -1: glUniform1i(uniform, 0)
+        """
+
+        uniform = glGetUniformLocation(program, "map")
+        glActiveTexture(GL_TEXTURE0)
+        glBindTexture(GL_TEXTURE_2D, self._depth_id)
+        if uniform != -1: glUniform1i(uniform, 0)
+
+        program = self._vertex_program
+
+        uniform = glGetUniformLocation(program, "map")
+        glActiveTexture(GL_TEXTURE0)
+        glBindTexture(GL_TEXTURE_2D, self._depth_id)
+        if uniform != -1: glUniform1i(uniform, 0)
+
+        uniform = glGetUniformLocation(program, "width")
+        if uniform != -1: glUniform1f(uniform, self._width)
+
+        uniform = glGetUniformLocation(program, "height")
+        if uniform != -1: glUniform1f(uniform, self._height)
+
+        for name, value in self._uniforms:
+            uniform = glGetUniformLocation(program, name)
+            if uniform != -1: glUniform1f(uniform, value)
 
     def _preDraw(self):
         """pre_draw callback"""
@@ -172,7 +282,35 @@ class CloudTexture:
 
     def _drawPoints(self):
         """"""
-        return
+        from math import floor
+
+        points = []
+
+        width, height = self._width, self._height
+        length = width * height
+
+        for i in range(length):
+            points.append((i % width, floor (i / width), 0))
+
+        glPointSize(3.0)
+        glBegin(GL_POINTS)
+        glColor3f(1.0, 0.0, 0.0)
+        for point in points:
+            glVertex3f(*point)
+        glEnd()
+        glPointSize(1.0)
+
+    def _draw(self):
+        """"""
+        glUseProgram(self.program_shader)
+        self._setupUniforms()
+
+        if self._points:
+            glCallList(self._points)
+        else:
+            self._drawPoints()
+
+        glUseProgram(0)
 
     def _drawUniformsValues(self):
         """write on screen - it runs every frame"""
@@ -215,7 +353,8 @@ def init(cont):
         logic.endGame()
 
     # initialize
-    logic.cloud = CloudTexture(ob)
+    #logic.cloud = CloudTexture(ob, 640, 480)
+    logic.cloud = CloudTexture(ob, 64, 48)
 
     #data = 'RUNNING'
     data = 'WEBGL'
