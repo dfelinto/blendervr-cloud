@@ -88,8 +88,6 @@ class CloudTexture:
         self._time_initial = time.time()
         self._texture_color = None
         self._texture_depth = None
-        self._vertex_shader_source = self._openText('threejs.vp')
-        self._fragment_shader_source = self._openText('threejs.fp')
 
         # shader uniforms
         self._uniforms = {}
@@ -103,8 +101,6 @@ class CloudTexture:
         self._points = None
         self._color_id = -1
         self._depth_id = -1
-        self._vertex_shader = None
-        self._fragment_shader = None
 
         self._setupShader()
         self._setupSceneCallbacks()
@@ -137,7 +133,7 @@ class CloudTexture:
         else:
             self._texture_depth = _texture
 
-    def loop(self):
+    def _loop(self):
         frame = self._getFrame()
 
         if self._frame != frame:
@@ -155,9 +151,6 @@ class CloudTexture:
 
         self._color_id = self._texture_color.bind_id
         self._depth_id = self._texture_depth.bind_id
-
-        # setup the custom glsl shader
-        #self._shader()
 
     def _openText(self, path):
         """"""
@@ -186,27 +179,33 @@ class CloudTexture:
             glEndList()
 
         # shader programs
-        self._fragment_shader = self._createShader(self._fragment_shader_source, type=GL_FRAGMENT_SHADER)
-        self._vertex_shader = self._createShader(self._vertex_shader_source, type=GL_VERTEX_SHADER)
+        vertex_shader = self._openText('threejs.vp')
+        fragment_shader = self._openText('threejs.fp')
+        self._program = self._createShaders(vertex_shader, fragment_shader)
 
-    def _createShader(self, source, program=None, type=GL_FRAGMENT_SHADER):
+    def _createShaders(self, vertex_shader, fragment_shader, program = None):
         """"""
         if program == None:
             program = glCreateProgram()
 
-        shader = glCreateShader(type)
-        glShaderSource(shader, source)
-        glCompileShader(shader)
+        for source, _type in (
+                (vertex_shader, GL_VERTEX_SHADER),
+                (fragment_shader, GL_FRAGMENT_SHADER),
+                ):
 
-        success = Buffer(GL_INT, 1)
-        glGetShaderiv(shader, GL_COMPILE_STATUS, success)
+            shader = glCreateShader(_type)
+            glShaderSource(shader, source)
+            glCompileShader(shader)
 
-        if not success[0]:
-            self._printShaderErrors(shader, source)
+            success = Buffer(GL_INT, 1)
+            glGetShaderiv(shader, GL_COMPILE_STATUS, success)
 
-        glAttachShader(program, shader)
+            if not success[0]:
+                self._printShaderErrors(shader, source)
+
+            glAttachShader(program, shader)
+
         glLinkProgram(program)
-
         return program
 
     def _printShaderErrors(self, shader, source):
@@ -240,7 +239,7 @@ class CloudTexture:
 
     def _setupUniforms(self):
         """"""
-        program = self._fragment_program
+        program = self._program
 
         """
         uniform = glGetUniformLocation(program, "color_map")
@@ -254,8 +253,6 @@ class CloudTexture:
         glBindTexture(GL_TEXTURE_2D, self._depth_id)
         if uniform != -1: glUniform1i(uniform, 0)
 
-        program = self._vertex_program
-
         uniform = glGetUniformLocation(program, "map")
         glActiveTexture(GL_TEXTURE0)
         glBindTexture(GL_TEXTURE_2D, self._depth_id)
@@ -267,17 +264,17 @@ class CloudTexture:
         uniform = glGetUniformLocation(program, "height")
         if uniform != -1: glUniform1f(uniform, self._height)
 
-        for name, value in self._uniforms:
+        for name, value in self._uniforms.items():
             uniform = glGetUniformLocation(program, name)
             if uniform != -1: glUniform1f(uniform, value)
 
     def _preDraw(self):
         """pre_draw callback"""
-        self.loop()
+        self._loop()
 
     def _postDraw(self):
         """post_draw callback"""
-        self._drawPoints()
+        self._draw()
         self._drawUniformsValues()
 
     def _drawPoints(self):
@@ -302,7 +299,7 @@ class CloudTexture:
 
     def _draw(self):
         """"""
-        glUseProgram(self.program_shader)
+        glUseProgram(self._program)
         self._setupUniforms()
 
         if self._points:
