@@ -78,11 +78,10 @@ class VideoTexture:
         return self._texture.bindId
 
 
-class CloudTexture:
-    def __init__(self, ob, width, height):
+class PointCloud:
+    def __init__(self, width, height):
         """basedir should be absolute already"""
         self._frame = -1
-        self._object = ob
 
         self._fps = 30
         self._time_initial = time.time()
@@ -350,8 +349,7 @@ def init(cont):
         logic.endGame()
 
     # initialize
-    #logic.cloud = CloudTexture(ob, 640, 480)
-    logic.cloud = CloudTexture(ob, 64, 48)
+    logic.cloud = PointCloud(640, 480)
 
     #data = 'RUNNING'
     data = 'WEBGL'
