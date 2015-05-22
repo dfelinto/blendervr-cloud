@@ -2,10 +2,9 @@ uniform sampler2D map;
 
 uniform float width;
 uniform float height;
-uniform float nearClipping, farClipping;
-
-uniform float pointSize;
-uniform float zOffset;
+uniform float near_clipping, far_clipping;
+uniform float point_size;
+uniform float z_offset;
 
 varying vec2 vUv;
 
@@ -21,7 +20,7 @@ void main()
 
     // Projection code by @kcmic
 
-    float z = ( 1.0 - depth ) * (farClipping - nearClipping) + nearClipping;
+    float z = ( 1.0 - depth ) * (far_clipping - near_clipping) + near_clipping;
 
     vec4 pos = vec4(
     ( position.x / width - 0.5 ) * z * XtoZ,
@@ -29,6 +28,6 @@ void main()
     - z + zOffset,
     1.0);
 
-    gl_PointSize = pointSize;
+    gl_PointSize = point_size;
     gl_Position = projectionMatrix * modelViewMatrix * pos;
 }
