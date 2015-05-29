@@ -1,10 +1,11 @@
-uniform sampler2D color_map;
-
-varying vec2 vUv;
+varying float depth;
+varying vec3 color;
 
 void main()
 {
-    vec4 color = texture2D(color_map, vUv);
-    gl_FragColor = vec4(color.r, color.g, color.b, 0.2);
+    gl_FragColor.rgb = color;
+    gl_FragColor.a = 0.2;
 
+    if (depth < 0.00001)
+        discard;
 }
