@@ -79,7 +79,7 @@ class VideoTexture:
 
 
 class PointCloud:
-    def __init__(self, width, height):
+    def __init__(self, width, height, location=(0.0, 0.0, 0.0)):
         """basedir should be absolute already"""
         self._frame = -1
 
@@ -96,6 +96,7 @@ class PointCloud:
         self._uniforms['far_clipping'] = 4000
         self._width = width
         self._height = height
+        self._location = location
 
         self._points = None
         self._color_id = -1
@@ -284,6 +285,7 @@ class PointCloud:
         for i in range(length):
             points.append((i % width, floor (i / width), 0))
 
+        glTranslatef(*self._location)
         glPointSize(3.0)
         glBegin(GL_POINTS)
         glColor3f(1.0, 0.0, 0.0)
@@ -339,13 +341,15 @@ def init(cont):
 
     dummy_rgb = objects.get('Dummy.RGB')
     dummy_depth = objects.get('Dummy.Depth')
+    kinect = objects.get('Kinect')
+    kinect_location = kinect.worldPosition if kinect else (0.0, 0.0, 0.0)
 
     if not (dummy_rgb and dummy_depth):
         print("Scene is missing dummy objects")
         logic.endGame()
 
     # initialize
-    logic.cloud = PointCloud(640, 480)
+    logic.cloud = PointCloud(640, 480, location=kinect_location)
 
     #data = 'RUNNING'
     data = 'WEBGL'
