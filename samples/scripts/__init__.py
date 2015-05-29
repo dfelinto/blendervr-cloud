@@ -90,10 +90,10 @@ class PointCloud:
 
         # shader uniforms
         self._uniforms = {}
-        self._uniforms['point_size'] = 2
-        self._uniforms['z_offset'] = 1000
-        self._uniforms['near_clipping'] = 850
-        self._uniforms['far_clipping'] = 4000
+        self._uniforms['point_size'] = 1
+        self._uniforms['z_offset'] = 1
+        self._uniforms['near_clipping'] = 0.85
+        self._uniforms['far_clipping'] = 4
         self._width = width
         self._height = height
         self._location = location
@@ -264,6 +264,9 @@ class PointCloud:
             uniform = glGetUniformLocation(program, name)
             if uniform != -1: glUniform1f(uniform, value)
 
+        uniform = glGetUniformLocation(program, "location")
+        if uniform != -1: glUniform3f(uniform, self._location[0], self._location[1], self._location[2])
+
     def _preDraw(self):
         """pre_draw callback"""
         self._loop()
@@ -283,16 +286,13 @@ class PointCloud:
         length = width * height
 
         for i in range(length):
-            points.append((i % width, floor (i / width), 0))
+            points.append((0.0, i % width, floor(i / width)))
 
-        glTranslatef(*self._location)
-        glPointSize(3.0)
         glBegin(GL_POINTS)
         glColor3f(1.0, 0.0, 0.0)
         for point in points:
             glVertex3f(*point)
         glEnd()
-        glPointSize(1.0)
 
     def _draw(self):
         """"""
@@ -321,6 +321,7 @@ class PointCloud:
         glColor3f(1.0, 1.0, 1.0)
 
         # BLF fun
+        return
         font_id = 0
         blf.size(font_id, 20, 72)
         offset_x = width * 0.8
@@ -351,8 +352,8 @@ def init(cont):
     # initialize
     logic.cloud = PointCloud(640, 480, location=kinect_location)
 
-    #data = 'RUNNING'
-    data = 'WEBGL'
+    data = 'RUNNING'
+    #data = 'WEBGL'
     #data = 'KINECT'
 
     if data == 'RUNNING':
