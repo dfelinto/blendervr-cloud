@@ -350,34 +350,66 @@ def init(cont):
     ob = cont.owner
     objects = logic.getCurrentScene().objects
 
-    dummy_rgb = objects.get('Dummy.RGB')
-    dummy_depth = objects.get('Dummy.Depth')
-    kinect = objects.get('Kinect')
-    kinect_location = kinect.worldPosition if kinect else (0.0, 0.0, 0.0)
+    dummy_a_rgb   = objects.get('Dummy.A.RGB')
+    dummy_a_depth = objects.get('Dummy.A.Depth')
+    dummy_b_rgb   = objects.get('Dummy.B.RGB')
+    dummy_b_depth = objects.get('Dummy.B.Depth')
 
-    if not (dummy_rgb and dummy_depth):
+    kinect_a = objects.get('Kinect.A')
+    kinect_a_location = kinect_a.worldPosition if kinect_a else (0.0, 0.0, 0.0)
+
+    kinect_b = objects.get('Kinect.B')
+    kinect_b_location = kinect_b.worldPosition if kinect_b else (0.0, 0.0, 0.0)
+
+    if not (dummy_a_rgb and dummy_a_depth):
         print("Scene is missing dummy objects")
         logic.endGame()
 
     # initialize
-    logic.cloud = PointCloud(640, 480, location=kinect_location)
+    width=640
+    height=480
 
-    data = 'RUNNING'
+    data = 'RUN_AND_WAVE'
+    #data = 'WAVING'
+    #data = 'RUNNING'
     #data = 'WEBGL'
     #data = 'KINECT'
 
-    if data == 'RUNNING':
+    if data == 'RUN_AND_WAVE':
+        logic.cloud_a = PointCloud(width, height, location=kinect_a_location)
         basedir = logic.expandPath("//../data/running-rgb/")
-        logic.cloud.addTextureImage(dummy_rgb, basedir, 'RGB', 110, True)
+        logic.cloud_a.addTextureImage(dummy_a_rgb, basedir, 'A.RGB', 110, True)
         basedir = logic.expandPath("//../data/running-depth/")
-        logic.cloud.addTextureImage(dummy_depth, basedir, 'Depth', 110, False)
+        logic.cloud_a.addTextureImage(dummy_a_depth, basedir, 'A.Depth', 110, False)
+
+        logic.cloud_b = PointCloud(width, height, location=kinect_b_location)
+        basedir = logic.expandPath("//../data/waving-rgb/")
+        logic.cloud_b.addTextureImage(dummy_b_rgb, basedir, 'B.RGB', 91, True)
+        basedir = logic.expandPath("//../data/waving-depth/")
+        logic.cloud_b.addTextureImage(dummy_b_depth, basedir, 'B.Depth', 91, False)
+
+    elif data == 'RUNNING':
+        logic.cloud = PointCloud(width, height, location=kinect_a_location)
+        basedir = logic.expandPath("//../data/running-rgb/")
+        logic.cloud.addTextureImage(dummy_a_rgb, basedir, 'A.RGB', 110, True)
+        basedir = logic.expandPath("//../data/running-depth/")
+        logic.cloud.addTextureImage(dummy_a_depth, basedir, 'A.Depth', 110, False)
+
+    elif data == 'WAVING':
+        logic.cloud = PointCloud(width, height, location=kinect_a_location)
+        basedir = logic.expandPath("//../data/waving-rgb/")
+        logic.cloud.addTextureImage(dummy_a_rgb, basedir, 'A.RGB', 91, True)
+        basedir = logic.expandPath("//../data/waving-depth/")
+        logic.cloud.addTextureImage(dummy_a_depth, basedir, 'A.Depth', 91, False)
 
     elif data == 'WEBGL':
+        logic.cloud = PointCloud(width, height, location=kinect_a_location)
         basedir = logic.expandPath("//../data/webgl/")
-        logic.cloud.addTextureVideo(dummy_rgb, basedir + 'kinect.webm', 'RGB', True)
-        logic.cloud.addTextureVideo(dummy_depth, basedir + 'kinect.webm', 'Depth', False)
+        logic.cloud.addTextureVideo(dummy_a_rgb, basedir + 'kinect.webm', 'A.RGB', True)
+        logic.cloud.addTextureVideo(dummy_a_depth, basedir + 'kinect.webm', 'A.Depth', False)
 
     elif data == 'KINECT':
+        logic.cloud = PointCloud(width, height, location=kinect_a_location)
         basedir = logic.expandPath("//../data/kinect/")
-        logic.cloud.addTextureVideo(dummy_rgb, basedir + 'rgb.mov', 'RGB', True)
-        logic.cloud.addTextureVideo(dummy_depth, basedir + 'depth.mov', 'Depth', False)
+        logic.cloud.addTextureVideo(dummy_a_rgb, basedir + 'rgb.mov', 'A.RGB', True)
+        logic.cloud.addTextureVideo(dummy_a_depth, basedir + 'depth.mov', 'A.Depth', False)
