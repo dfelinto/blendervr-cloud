@@ -308,20 +308,24 @@ class PointCloud:
 
     def _drawUniformsValues(self):
         """write on screen - it runs every frame"""
+        return
+
         width = render.getWindowWidth()
         height = render.getWindowHeight()
 
         # OpenGL setup
         glMatrixMode(GL_PROJECTION)
+        glPushMatrix()
         glLoadIdentity()
         gluOrtho2D(0, width, 0, height)
+
         glMatrixMode(GL_MODELVIEW)
+        glPushMatrix()
         glLoadIdentity()
 
         glColor3f(1.0, 1.0, 1.0)
 
         # BLF fun
-        return
         font_id = 0
         blf.size(font_id, 20, 72)
         offset_x = width * 0.8
@@ -333,6 +337,12 @@ class PointCloud:
             blf.position(font_id, offset_x, y, 0)
             blf.draw(font_id, "{0} : {1}".format(name, data))
             y += offset_height
+
+        glMatrixMode(GL_PROJECTION)
+        glPopMatrix()
+
+        glMatrixMode(GL_MODELVIEW)
+        glPopMatrix()
 
 
 def init(cont):
