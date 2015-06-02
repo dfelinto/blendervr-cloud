@@ -1,21 +1,42 @@
 uniform sampler2D color_map;
 uniform sampler2D depth_map;
 
-const float factor = 0.3;
-const float range_near = 0.5;
-const float range_far = 4.5;
+uniform float width;
+uniform float height;
+uniform float near_clipping, far_clipping;
+uniform float point_size;
+uniform float z_offset;
+uniform vec3 location;
+
+varying vec3 color;
+varying float depth;
+
+const float XtoZ = 1.11146; // tan( 1.0144686 / 2.0 ) * 2.0;
+const float YtoZ = 0.83359; // tan( 0.7898090 / 2.0 ) * 2.0;
+
+const float scale = 3.0;
 
 void main()
 {
-    gl_TexCoord[0] = gl_MultiTexCoord0;
+    vec4 position = gl_Vertex;
+    vec2 uv = vec2(position.y / width, position.z / height);
 
-    float raw_depth = 1.0 - texture2D(depth_map, gl_TexCoord[0].st).r;
-    float depth = (range_near + raw_depth * range_far) * factor;
+    vec4 depth_raw = texture2D(depth_map, uv);
+    depth = (depth_raw.r + depth_raw.g + depth_raw.b) / 3.0;
+    color = texture2D(color_map, uv).rgb;
 
-    vec4 coord_vec = gl_Vertex;
+    float x = ( 1.0 - depth ) * (far_clipping - near_clipping) + near_clipping;
+    x -= near_clipping;
 
-    /* depth effect */
-    coord_vec.z -= depth;
+    position.xyz *= scale / width;
+    position.xyz += location;
 
-    gl_Position = gl_ModelViewProjectionMatrix * coord_vec;
+    vec4 pos = vec4(
+        position.x - x,
+        position.y,
+        position.z,
+        1.0);
+
+    gl_PointSize = point_size;
+    gl_Position = gl_ProjectionMatrix * gl_ModelViewMatrix * pos;
 }

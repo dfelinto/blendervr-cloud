@@ -179,8 +179,8 @@ class PointCloud:
             glEndList()
 
         # shader programs
-        vertex_shader = self._openText('threejs.vp')
-        fragment_shader = self._openText('threejs.fp')
+        vertex_shader = self._openText('cloud.vp')
+        fragment_shader = self._openText('cloud.fp')
         self._program = self._createShaders(vertex_shader, fragment_shader)
 
     def _createShaders(self, vertex_shader, fragment_shader, program = None):
