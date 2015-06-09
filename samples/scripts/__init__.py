@@ -79,7 +79,7 @@ class VideoTexture:
 
 
 class PointCloud:
-    def __init__(self, width, height, location=(0.0, 0.0, 0.0)):
+    def __init__(self, width, height, location=(0.0, 0.0, 0.0), near=0.5, far=4.5):
         """basedir should be absolute already"""
         self._frame = -1
 
@@ -91,9 +91,9 @@ class PointCloud:
         # shader uniforms
         self._uniforms = {}
         self._uniforms['point_size'] = 1
-        self._uniforms['z_offset'] = 1
-        self._uniforms['near_clipping'] = 0.85
-        self._uniforms['far_clipping'] = 4
+        self._uniforms['z_offset'] = 0
+        self._uniforms['near_clipping'] = near
+        self._uniforms['far_clipping'] = far
         self._width = width
         self._height = height
         self._location = location
@@ -369,11 +369,15 @@ def init(cont):
     width=640
     height=480
 
-    data = 'RUN_AND_WAVE'
+    #data = 'RUN_AND_WAVE'
     #data = 'WAVING'
     #data = 'RUNNING'
     #data = 'WEBGL'
     #data = 'KINECT'
+    #data = 'KINECT_CALIBRATION-1'
+    #data = 'KINECT_CALIBRATION-2.1'
+    #data = 'KINECT_CALIBRATION-2.2'
+    data = 'STOOL'
 
     if data == 'RUN_AND_WAVE':
         logic.cloud_a = PointCloud(width, height, location=kinect_a_location)
@@ -413,3 +417,28 @@ def init(cont):
         basedir = logic.expandPath("//../data/kinect/")
         logic.cloud.addTextureVideo(dummy_a_rgb, basedir + 'rgb.mov', 'A.RGB', True)
         logic.cloud.addTextureVideo(dummy_a_depth, basedir + 'depth.mov', 'A.Depth', False)
+
+    elif data == 'KINECT_CALIBRATION-1':
+        logic.cloud = PointCloud(508, 442, location=kinect_a_location)
+        basedir = logic.expandPath("//../data/kinect-calibration/kinect-calibration-2/")
+        logic.cloud.addTextureVideo(dummy_a_rgb, basedir + 'kinect2-calibration-1.mov', 'A.RGB', True)
+        logic.cloud.addTextureVideo(dummy_a_depth, basedir + 'kinect2-calibration-1.mov', 'A.Depth', False)
+
+    elif data == 'KINECT_CALIBRATION-2.1':
+        logic.cloud = PointCloud(508, 442, location=kinect_a_location)
+        basedir = logic.expandPath("//../data/kinect-calibration/kinect-calibration-2/")
+        logic.cloud.addTextureVideo(dummy_a_rgb, basedir + 'kinect2-calibration-2.1.mov', 'A.RGB', True)
+        logic.cloud.addTextureVideo(dummy_a_depth, basedir + 'kinect2-calibration-2.1.mov', 'A.Depth', False)
+
+    elif data == 'KINECT_CALIBRATION-2.2':
+        logic.cloud = PointCloud(508, 442, location=kinect_a_location)
+        basedir = logic.expandPath("//../data/kinect-calibration/kinect-calibration-2/")
+        logic.cloud.addTextureVideo(dummy_a_rgb, basedir + 'kinect2-calibration-2.2.mov', 'A.RGB', True)
+        logic.cloud.addTextureVideo(dummy_a_depth, basedir + 'kinect2-calibration-2.2.mov', 'A.Depth', False)
+
+    elif data == 'STOOL':
+        logic.cloud_a = PointCloud(256, 212, location=kinect_a_location, near=0.0, far=8.0)
+        basedir = logic.expandPath("//../data/stool-rgb/")
+        logic.cloud_a.addTextureImage(dummy_a_rgb, basedir, 'A.RGB', 50, True)
+        basedir = logic.expandPath("//../data/stool-depth/")
+        logic.cloud_a.addTextureImage(dummy_a_depth, basedir, 'A.Depth', 50, False)

@@ -1,6 +1,8 @@
 uniform sampler2D color_map;
 uniform sampler2D depth_map;
 
+uniform float camera_shift;
+
 uniform float width;
 uniform float height;
 uniform float near_clipping, far_clipping;
@@ -9,12 +11,10 @@ uniform float z_offset;
 uniform vec3 location;
 
 varying vec3 color;
-varying float depth;
+varying float depth_normal;
 
-const float XtoZ = 1.11146; // tan( 1.0144686 / 2.0 ) * 2.0;
-const float YtoZ = 0.83359; // tan( 0.7898090 / 2.0 ) * 2.0;
-
-const float scale = 3.0;
+const float YtoDepth = 1.11146; // tan( 1.0144686 / 2.0 ) * 2.0;
+const float ZtoDepth = 0.83359; // tan( 0.7898090 / 2.0 ) * 2.0;
 
 void main()
 {
@@ -22,19 +22,23 @@ void main()
     vec2 uv = vec2(position.y / width, position.z / height);
 
     vec4 depth_raw = texture2D(depth_map, uv);
-    depth = (depth_raw.r + depth_raw.g + depth_raw.b) / 3.0;
+    depth_normal = (depth_raw.r + depth_raw.g + depth_raw.b) / 3.0;
     color = texture2D(color_map, uv).rgb;
 
-    float x = ( 1.0 - depth ) * (far_clipping - near_clipping) + near_clipping;
-    x -= near_clipping;
+    float depth = near_clipping + depth_normal * (far_clipping - near_clipping);
 
-    position.xyz *= scale / width;
+    position.y -= width * 0.5;
+    position.z -= height * 0.5;
+
+    position.xyz.y /= width;
+    position.xyz.z /= height;
+
     position.xyz += location;
 
     vec4 pos = vec4(
-        position.x - x,
-        position.y,
-        position.z,
+        position.x - depth,
+        position.y * depth * YtoDepth,
+        position.z * depth * ZtoDepth,
         1.0);
 
     gl_PointSize = point_size;
