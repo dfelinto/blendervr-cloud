@@ -11,7 +11,7 @@ import blf
 from bgl import *
 
 class ImageTexture:
-    def __init__(self, ob, basedir, name, length):
+    def __init__(self, ob, basedir, name, length, is_color):
         self._object = ob
         self._basedir = basedir
         self._length = length + 1
@@ -20,6 +20,9 @@ class ImageTexture:
         ID = texture.materialID(self._object, 'IM{0}'.format(name))
         # create a texture object
         self._texture = texture.Texture(self._object, ID)
+
+        self._file_format = "tga" if is_color else "webp"
+        self._file_format = "tga"
 
     def _getFrame(self, frame):
         """"""
@@ -39,7 +42,7 @@ class ImageTexture:
 
     def _getSourcePath(self, frame):
         """"""
-        filename = "{0:04}.tga".format(frame)
+        filename = "{0:04}.{1}".format(frame, self._file_format)
         url = os.path.join(self._basedir, filename)
         return url
 
@@ -117,7 +120,7 @@ class PointCloud:
 
     def addTextureImage(self, dummy_object, basedir, name, length, is_color):
         """"""
-        _texture = ImageTexture(dummy_object, basedir, name, length)
+        _texture = ImageTexture(dummy_object, basedir, name, length, is_color)
 
         if is_color:
             self._texture_color = _texture
@@ -377,7 +380,8 @@ def init(cont):
     #data = 'KINECT_CALIBRATION-1'
     #data = 'KINECT_CALIBRATION-2.1'
     #data = 'KINECT_CALIBRATION-2.2'
-    data = 'STOOL'
+    #data = 'STOOL'
+    data = 'STOOL_XYZ'
 
     if data == 'RUN_AND_WAVE':
         logic.cloud_a = PointCloud(width, height, location=kinect_a_location)
@@ -442,3 +446,10 @@ def init(cont):
         logic.cloud_a.addTextureImage(dummy_a_rgb, basedir, 'A.RGB', 50, True)
         basedir = logic.expandPath("//../data/stool-depth/")
         logic.cloud_a.addTextureImage(dummy_a_depth, basedir, 'A.Depth', 50, False)
+
+    elif data == 'STOOL_XYZ':
+        logic.cloud_a = PointCloud(256, 212, location=kinect_a_location, near=0.0, far=8.0)
+        basedir = logic.expandPath("//../data/stool-rgb/")
+        logic.cloud_a.addTextureImage(dummy_a_rgb, basedir, 'A.RGB', 10, True)
+        basedir = logic.expandPath("//../data/stool-xyz/")
+        logic.cloud_a.addTextureImage(dummy_a_depth, basedir, 'A.Depth', 10, False)

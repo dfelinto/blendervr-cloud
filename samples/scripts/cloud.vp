@@ -13,32 +13,31 @@ uniform vec3 location;
 varying vec3 color;
 varying float depth_normal;
 
-const float YtoDepth = 1.11146; // tan( 1.0144686 / 2.0 ) * 2.0;
-const float ZtoDepth = 0.83359; // tan( 0.7898090 / 2.0 ) * 2.0;
+const vec2 range_x = vec2(-6.0, 6.0);
+const vec2 range_y = vec2(-5.0, 5.0);
+const vec2 range_z = vec2(0.5, 8.0);
 
 void main()
 {
     vec4 position = gl_Vertex;
     vec2 uv = vec2(position.y / width, position.z / height);
-
-    vec4 depth_raw = texture2D(depth_map, uv);
-    depth_normal = (depth_raw.r + depth_raw.g + depth_raw.b) / 3.0;
     color = texture2D(color_map, uv).rgb;
+
+    vec3 xyz = texture2D(depth_map, uv).rgb;
+    depth_normal = xyz.z;
 
     float depth = near_clipping + depth_normal * (far_clipping - near_clipping);
 
-    position.y -= width * 0.5;
-    position.z -= height * 0.5;
-
-    position.xyz.y /= width;
-    position.xyz.z /= height;
+    position.y = -(range_x[0] + (xyz.x * (range_x[1] - range_x[0])));
+    position.z =  (range_y[0] + (xyz.y * (range_y[1] - range_y[0])));
+    position.x = -(range_z[0] + (xyz.z * (range_z[1] - range_z[0])));
 
     position.xyz += location;
 
     vec4 pos = vec4(
-        position.x - depth,
-        position.y * depth * YtoDepth,
-        position.z * depth * ZtoDepth,
+        position.x,
+        position.y,
+        position.z,
         1.0);
 
     gl_PointSize = point_size;
