@@ -8,7 +8,8 @@ uniform float height;
 uniform float near_clipping, far_clipping;
 uniform float point_size;
 uniform float z_offset;
-uniform vec3 location;
+
+uniform mat4 modelview_matrix;
 
 varying vec3 color;
 varying float depth_normal;
@@ -33,8 +34,6 @@ void main()
     position.xyz.y /= width;
     position.xyz.z /= height;
 
-    position.xyz += location;
-
     vec4 pos = vec4(
         position.x - depth,
         position.y * depth * YtoDepth,
@@ -42,5 +41,5 @@ void main()
         1.0);
 
     gl_PointSize = point_size;
-    gl_Position = gl_ProjectionMatrix * gl_ModelViewMatrix * pos;
+    gl_Position = gl_ProjectionMatrix * gl_ModelViewMatrix * modelview_matrix * pos;
 }

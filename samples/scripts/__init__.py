@@ -9,6 +9,7 @@ import os
 import blf
 
 from bgl import *
+from mathutils import Matrix
 
 class ImageTexture:
     def __init__(self, ob, basedir, name, length):
@@ -79,7 +80,7 @@ class VideoTexture:
 
 
 class PointCloud:
-    def __init__(self, width, height, location=(0.0, 0.0, 0.0), near=0.5, far=4.5):
+    def __init__(self, width, height, matrix, near=0.5, far=4.5):
         """basedir should be absolute already"""
         self._frame = -1
 
@@ -96,7 +97,7 @@ class PointCloud:
         self._uniforms['far_clipping'] = far
         self._width = width
         self._height = height
-        self._location = location
+        self._modelview_matrix = self._getModelViewMatrix(matrix)
 
         self._points = None
         self._color_id = -1
@@ -108,6 +109,11 @@ class PointCloud:
     def __del__(self):
         if self._points and glDeleteLists:
             glDeleteLists(self._points, 1)
+
+    def _getModelViewMatrix(self, matrix):
+        """"""
+        buff = Buffer(GL_FLOAT, (4,4), matrix.transposed())
+        return buff
 
     def _setupSceneCallbacks(self):
         """"""
@@ -264,8 +270,8 @@ class PointCloud:
             uniform = glGetUniformLocation(program, name)
             if uniform != -1: glUniform1f(uniform, value)
 
-        uniform = glGetUniformLocation(program, "location")
-        if uniform != -1: glUniform3f(uniform, self._location[0], self._location[1], self._location[2])
+        uniform = glGetUniformLocation(program, "modelview_matrix")
+        if uniform != -1: glUniformMatrix4fv(uniform, 1, 0, self._modelview_matrix)
 
     def _preDraw(self):
         """pre_draw callback"""
@@ -356,10 +362,10 @@ def init(cont):
     dummy_b_depth = objects.get('Dummy.B.Depth')
 
     kinect_a = objects.get('Kinect.A')
-    kinect_a_location = kinect_a.worldPosition if kinect_a else (0.0, 0.0, 0.0)
+    kinect_a_matrix = kinect_a.worldTransform if kinect_a else Matrix()
 
     kinect_b = objects.get('Kinect.B')
-    kinect_b_location = kinect_b.worldPosition if kinect_b else (0.0, 0.0, 0.0)
+    kinect_b_matrix = kinect_b.worldTransform if kinect_b else Matrix()
 
     if not (dummy_a_rgb and dummy_a_depth):
         print("Scene is missing dummy objects")
@@ -380,64 +386,64 @@ def init(cont):
     data = 'STOOL'
 
     if data == 'RUN_AND_WAVE':
-        logic.cloud_a = PointCloud(width, height, location=kinect_a_location)
+        logic.cloud_a = PointCloud(width, height, kinect_a_matrix)
         basedir = logic.expandPath("//../data/running-rgb/")
         logic.cloud_a.addTextureImage(dummy_a_rgb, basedir, 'A.RGB', 110, True)
         basedir = logic.expandPath("//../data/running-depth/")
         logic.cloud_a.addTextureImage(dummy_a_depth, basedir, 'A.Depth', 110, False)
 
-        logic.cloud_b = PointCloud(width, height, location=kinect_b_location)
+        logic.cloud_b = PointCloud(width, height, kinect_b_matrix)
         basedir = logic.expandPath("//../data/waving-rgb/")
         logic.cloud_b.addTextureImage(dummy_b_rgb, basedir, 'B.RGB', 91, True)
         basedir = logic.expandPath("//../data/waving-depth/")
         logic.cloud_b.addTextureImage(dummy_b_depth, basedir, 'B.Depth', 91, False)
 
     elif data == 'RUNNING':
-        logic.cloud = PointCloud(width, height, location=kinect_a_location)
+        logic.cloud = PointCloud(width, height, kinect_a_matrix)
         basedir = logic.expandPath("//../data/running-rgb/")
         logic.cloud.addTextureImage(dummy_a_rgb, basedir, 'A.RGB', 110, True)
         basedir = logic.expandPath("//../data/running-depth/")
         logic.cloud.addTextureImage(dummy_a_depth, basedir, 'A.Depth', 110, False)
 
     elif data == 'WAVING':
-        logic.cloud = PointCloud(width, height, location=kinect_a_location)
+        logic.cloud = PointCloud(width, height, kinect_a_matrix)
         basedir = logic.expandPath("//../data/waving-rgb/")
         logic.cloud.addTextureImage(dummy_a_rgb, basedir, 'A.RGB', 91, True)
         basedir = logic.expandPath("//../data/waving-depth/")
         logic.cloud.addTextureImage(dummy_a_depth, basedir, 'A.Depth', 91, False)
 
     elif data == 'WEBGL':
-        logic.cloud = PointCloud(width, height, location=kinect_a_location)
+        logic.cloud = PointCloud(width, height, kinect_a_matrix)
         basedir = logic.expandPath("//../data/webgl/")
         logic.cloud.addTextureVideo(dummy_a_rgb, basedir + 'kinect.webm', 'A.RGB', True)
         logic.cloud.addTextureVideo(dummy_a_depth, basedir + 'kinect.webm', 'A.Depth', False)
 
     elif data == 'KINECT':
-        logic.cloud = PointCloud(width, height, location=kinect_a_location)
+        logic.cloud = PointCloud(width, height, kinect_a_matrix)
         basedir = logic.expandPath("//../data/kinect/")
         logic.cloud.addTextureVideo(dummy_a_rgb, basedir + 'rgb.mov', 'A.RGB', True)
         logic.cloud.addTextureVideo(dummy_a_depth, basedir + 'depth.mov', 'A.Depth', False)
 
     elif data == 'KINECT_CALIBRATION-1':
-        logic.cloud = PointCloud(508, 442, location=kinect_a_location)
+        logic.cloud = PointCloud(508, 442, kinect_a_matrix)
         basedir = logic.expandPath("//../data/kinect-calibration/kinect-calibration-2/")
         logic.cloud.addTextureVideo(dummy_a_rgb, basedir + 'kinect2-calibration-1.mov', 'A.RGB', True)
         logic.cloud.addTextureVideo(dummy_a_depth, basedir + 'kinect2-calibration-1.mov', 'A.Depth', False)
 
     elif data == 'KINECT_CALIBRATION-2.1':
-        logic.cloud = PointCloud(508, 442, location=kinect_a_location)
+        logic.cloud = PointCloud(508, 442, kinect_a_matrix)
         basedir = logic.expandPath("//../data/kinect-calibration/kinect-calibration-2/")
         logic.cloud.addTextureVideo(dummy_a_rgb, basedir + 'kinect2-calibration-2.1.mov', 'A.RGB', True)
         logic.cloud.addTextureVideo(dummy_a_depth, basedir + 'kinect2-calibration-2.1.mov', 'A.Depth', False)
 
     elif data == 'KINECT_CALIBRATION-2.2':
-        logic.cloud = PointCloud(508, 442, location=kinect_a_location)
+        logic.cloud = PointCloud(508, 442, kinect_a_matrix)
         basedir = logic.expandPath("//../data/kinect-calibration/kinect-calibration-2/")
         logic.cloud.addTextureVideo(dummy_a_rgb, basedir + 'kinect2-calibration-2.2.mov', 'A.RGB', True)
         logic.cloud.addTextureVideo(dummy_a_depth, basedir + 'kinect2-calibration-2.2.mov', 'A.Depth', False)
 
     elif data == 'STOOL':
-        logic.cloud_a = PointCloud(256, 212, location=kinect_a_location, near=0.0, far=8.0)
+        logic.cloud_a = PointCloud(256, 212, kinect_a_matrix, near=0.0, far=8.0)
         basedir = logic.expandPath("//../data/stool-rgb/")
         logic.cloud_a.addTextureImage(dummy_a_rgb, basedir, 'A.RGB', 50, True)
         basedir = logic.expandPath("//../data/stool-depth/")
